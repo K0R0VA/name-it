@@ -60,10 +60,11 @@ use core::{
     pin::Pin,
     task::{Context, Poll},
 };
-
+use core::marker::PhantomData;
 /// A way to name the return type of an async function. See [crate docs](crate)
 /// for more info.
 pub use name_it_macros::name_it;
+pub use name_it_macros::async_trait;
 
 // Manual formatting looks better here
 #[rustfmt::skip]
@@ -102,30 +103,28 @@ macro_rules! _produce_any {
 macro_rules! _name_it_inner {
     ($v:vis type $name:ident = $func:ident($($underscores:tt)*) -> $ret:ty$(;)?) => {
         #[repr(C)]
-        $v struct $name<'fut>
+        $v struct $name
         where
             $crate::_elain::Align<{$crate::align_of_fut(&($func as fn($($underscores)*) -> _))}>: $crate::_elain::Alignment,
         {
             bytes: [::core::mem::MaybeUninit<u8>; $crate::size_of_fut(&($func as fn($($underscores)*) -> _))],
             _alignment: $crate::_elain::Align<{$crate::align_of_fut(&($func as fn($($underscores)*) -> _))}>,
             // FIXME: invariant is probably too strict
-            _lifetime: ::core::marker::PhantomData<&'fut mut &'fut mut ()>,
             _markers: $crate::markers!($crate::_produce_any!($func $($underscores)*)),
         }
 
-        impl<'fut> $name<'fut> {
+        impl $name {
             #[doc(hidden)]
             $v unsafe fn new(bytes: [::core::mem::MaybeUninit<u8>; $crate::size_of_fut(&($func as fn($($underscores)*) -> _))]) -> Self {
                 Self {
                     bytes,
                     _alignment: $crate::_elain::Align::NEW,
-                    _lifetime: ::core::marker::PhantomData,
                     _markers: $crate::markers::Markers::new(),
                 }
             }
         }
 
-        impl<'fut> ::core::future::Future for $name<'fut> {
+        impl ::core::future::Future for $name {
             type Output = $ret;
 
             fn poll(self: ::core::pin::Pin<&mut Self>, cx: &mut ::core::task::Context<'_>) -> ::core::task::Poll<$ret> {
@@ -143,7 +142,7 @@ macro_rules! _name_it_inner {
             }
         }
 
-        impl<'fut> ::core::ops::Drop for $name<'fut> {
+        impl ::core::ops::Drop for $name {
             fn drop(&mut self) {
                 // SAFETY: this is the only `::dispose()` call and we're not lying about the type
                 unsafe {
@@ -263,3 +262,5 @@ impl_fut_params!(
     T00 T01 T02 T03 T04 T05 T06 T07 T08 T09 T10 T11 T12 T13 T14 T15
     T16 T17 T18 T19 T20 T21 T22 T23 T24 T25 T26 T27 T28 T29 T30 T31
 );
+
+

@@ -13,3 +13,4 @@ proc-macro = true
 proc-macro-error = "1"
 quote = "1"
 syn = { version = "1", features = ["extra-traits", "full", "visit-mut"] }
+proc-macro2 = "1.0"
