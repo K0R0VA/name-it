@@ -79,7 +79,7 @@ pub fn expand(mut input: Item) -> TokenStream {
                         }).collect();
                         let inputs = quote!( #(#inputs,) * );
                         *block = syn::parse(quote!({ #fun_name( #inputs ) }).into()).unwrap();
-                        sig.output = syn::parse(quote!(-> Self::#fun_name).into()).unwrap();
+                        sig.output = syn::parse(quote!(-> Self:: #fun_name).into()).unwrap();
                     }
                 }
             }
@@ -88,7 +88,7 @@ pub fn expand(mut input: Item) -> TokenStream {
                 input.items.push(t);
             }
             TokenStream::from(quote!(
-                #(#funcs), *
+                #(#funcs) *
                 #input
             ))
         }
