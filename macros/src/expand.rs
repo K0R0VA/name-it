@@ -74,7 +74,7 @@ pub fn expand(mut input: Item) -> TokenStream {
                         funcs.push(future);
                         let block = &mut method.block;
                         let inputs: Vec<TokenStream2> = sig.inputs.iter().map(|i| match i {
-                            FnArg::Receiver(r) => quote!(#r),
+                            FnArg::Receiver(r) => quote!(self),
                             FnArg::Typed(PatType {pat, ..}) => quote!(#pat)
                         }).collect();
                         let inputs = quote!( #(#inputs,) * );
